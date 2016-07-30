@@ -30,6 +30,7 @@
 #include <cerrno>
 #include <dirent.h>
 #include <map>
+#include <vector>
 
 #include "guilib/XBTF.h"
 #include "guilib/XBTFReader.h"
@@ -143,32 +144,29 @@ CXBTFFrame appendContent(CXBTFWriter &writer, int width, int height, unsigned ch
   {
     // grab a temporary buffer for unpacking into
     packedSize = size + size / 16 + 64 + 3; // see simple.c in lzo
-    unsigned char *packed  = new unsigned char[packedSize];
-    unsigned char *working = new unsigned char[LZO1X_999_MEM_COMPRESS];
-    if (packed && working)
+    std::vector<unsigned char> packed(packedSize);
+    std::vector<unsigned char> working(LZO1X_999_MEM_COMPRESS);
+        
+    if (lzo1x_999_compress(data, size, packed.data(), &packedSize, working.data()) != LZO_E_OK || packedSize > size)
     {
-      if (lzo1x_999_compress(data, size, packed, &packedSize, working) != LZO_E_OK || packedSize > size)
-      {
-        // compression failed, or compressed size is bigger than uncompressed, so store as uncompressed
+      // compression failed, or compressed size is bigger than uncompressed, so store as uncompressed
+      packedSize = size;
+      writer.AppendContent(data, size);
+    }
+    else
+    { // success
+      lzo_uint optimSize = size;
+      if (lzo1x_optimize(packed.data(), packedSize, data, &optimSize, NULL) != LZO_E_OK || optimSize != size)
+      { //optimisation failed
         packedSize = size;
         writer.AppendContent(data, size);
       }
       else
       { // success
-        lzo_uint optimSize = size;
-        if (lzo1x_optimize(packed, packedSize, data, &optimSize, NULL) != LZO_E_OK || optimSize != size)
-        { //optimisation failed
-          packedSize = size;
-          writer.AppendContent(data, size);
-        }
-        else
-        { // success
-          writer.AppendContent(packed, packedSize);
-        }
+        writer.AppendContent(packed.data(), packedSize);
       }
-      delete[] working;
-      delete[] packed;
     }
+    
   }
   else
   {
@@ -199,7 +197,7 @@ CXBTFFrame createXBTFFrame(RGBAImage &image, CXBTFWriter& writer, double maxMSE,
 
   int width, height;
   unsigned int format = 0;
-  unsigned char* argb = (unsigned char*)image.pixels;
+  unsigned char* argb = (unsigned char*)image.pixels.data();
   
   width  = image.width;
   height = image.height;
@@ -298,7 +296,7 @@ int createBundle(const std::string& InputDir, const std::string& OutputFile, dou
     {
       for (unsigned int j = 0; j < frames.frameList.size(); j++)
         MD5Update(&ctx,
-          (const uint8_t*)frames.frameList[j].rgbaImage.pixels,
+          (const uint8_t*)frames.frameList[j].rgbaImage.pixels.data(),
           frames.frameList[j].rgbaImage.height * frames.frameList[j].rgbaImage.pitch);
 
       if (checkDupe(&ctx,hashes,dupes,i))

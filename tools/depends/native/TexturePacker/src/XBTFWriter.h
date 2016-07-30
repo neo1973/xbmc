@@ -43,8 +43,7 @@ private:
 
   std::string m_outputFile;
   FILE* m_file;
-  unsigned char *m_data;
-  size_t         m_size;
+  std::vector<unsigned char> m_data;
 };
 
 #endif

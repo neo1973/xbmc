@@ -49,17 +49,15 @@ GifHelper::GifHelper() :
   m_numFrames(0),
   m_filename(""),
   m_gif(nullptr),
-  m_pTemplate(nullptr),
   m_isAnimated(-1)
 {
-  m_gifFile = new CFile();
+  m_gifFile = std::unique_ptr<CFile>(new CFile());
 }
 
 GifHelper::~GifHelper()
 {
     Close(m_gif);
     Release();
-    delete m_gifFile;
 }
 
 bool GifHelper::Open(GifFileType*& gif, void *dataPtr, InputFunc readFunc)
@@ -114,8 +112,7 @@ const char* GifHelper::Reason(int reason)
 
 void GifHelper::Release()
 {
-  delete[] m_pTemplate;
-  m_pTemplate = nullptr;
+  m_Template.clear();
   m_globalPalette.clear();
   m_frames.clear();
 }
@@ -184,7 +181,7 @@ bool GifHelper::LoadGifMetaData(GifFileType* gif)
 bool GifHelper::LoadGifMetaData(const char* file)
 {
   m_gifFile->Close();
-  if (!m_gifFile->Open(file) || !Open(m_gif, m_gifFile, ReadFromVfs))
+  if (!m_gifFile->Open(file) || !Open(m_gif, m_gifFile.get(), ReadFromVfs))
     return false;
 
   return LoadGifMetaData(m_gif);
@@ -241,8 +238,7 @@ bool GifHelper::LoadGif(const char* file)
 
 void GifHelper::InitTemplateAndColormap()
 {
-  m_pTemplate = new unsigned char[m_imageSize];
-  memset(m_pTemplate, 0, m_imageSize);
+  m_Template.resize(m_imageSize);
 
   if (m_gif->SColorMap)
   {
@@ -301,7 +297,7 @@ int GifHelper::ExtractFrames(unsigned int count)
   if (!m_gif)
     return -1;
 
-  if (!m_pTemplate)
+  if (!m_Template.empty())
   {
     fprintf(stderr, "Gif::ExtractFrames(): No frame template available\n");
     return -1;
@@ -350,11 +346,10 @@ int GifHelper::ExtractFrames(unsigned int count)
       continue;
     }
 
-    frame->m_pImage = new unsigned char[m_imageSize];
+    frame->m_pImage = m_Template;
     frame->m_imageSize = m_imageSize;
-    memcpy(frame->m_pImage, m_pTemplate, m_imageSize);
 
-    ConstructFrame(*frame, savedImage.RasterBits);
+    ConstructFrame(*frame, (char*)savedImage.RasterBits);
 
     if (!PrepareTemplate(*frame))
     {
@@ -368,18 +363,18 @@ int GifHelper::ExtractFrames(unsigned int count)
   return extracted;
 }
 
-void GifHelper::ConstructFrame(GifFrame &frame, const unsigned char* src) const
+void GifHelper::ConstructFrame(GifFrame &frame, const char* src) const
 {
   size_t paletteSize = frame.m_palette.size();
 
   for (unsigned int dest_y = frame.m_top, src_y = 0; src_y < frame.m_height; ++dest_y, ++src_y)
   {
-    unsigned char *to = frame.m_pImage + (dest_y * m_pitch) + (frame.m_left * sizeof(GifColor));
+    auto to = frame.m_pImage.data() + (dest_y * m_pitch) + (frame.m_left * sizeof(GifColor));
 
-    const unsigned char *from = src + (src_y * frame.m_width);
+    auto from = src + (src_y * frame.m_width);
     for (unsigned int src_x = 0; src_x < frame.m_width; ++src_x)
     {
-      unsigned char index = *from++;
+      auto index = *from++;
 
       if (index >= paletteSize)
       {
@@ -404,7 +399,7 @@ bool GifHelper::PrepareTemplate(GifFrame &frame)
   case DISPOSAL_UNSPECIFIED:
     /* Leave image in place */
   case DISPOSE_DO_NOT:
-    memcpy(m_pTemplate, frame.m_pImage, m_imageSize);
+    m_Template = frame.m_pImage;
     break;
 
     /*
@@ -414,7 +409,7 @@ bool GifHelper::PrepareTemplate(GifFrame &frame)
     */
   case DISPOSE_BACKGROUND:
   {
-    ClearFrameAreaToTransparency(m_pTemplate, frame);
+    ClearFrameAreaToTransparency(m_Template.data(), frame);
     break;
   }
   /* Restore to previous content */
@@ -437,7 +432,7 @@ bool GifHelper::PrepareTemplate(GifFrame &frame)
     {
       if (m_frames[i]->m_disposal != DISPOSE_PREVIOUS)
       {
-        memcpy(m_pTemplate, m_frames[i]->m_pImage, m_imageSize);
+        m_Template = m_frames[i]->m_pImage;
         valid = true;
         break;
       }
@@ -459,11 +454,11 @@ bool GifHelper::PrepareTemplate(GifFrame &frame)
   return true;
 }
 
-void GifHelper::ClearFrameAreaToTransparency(unsigned char* dest, const GifFrame &frame)
+void GifHelper::ClearFrameAreaToTransparency(char* dest, const GifFrame &frame)
 {
   for (unsigned int dest_y = frame.m_top, src_y = 0; src_y < frame.m_height; ++dest_y, ++src_y)
   {
-    unsigned char *to = dest + (dest_y * m_pitch) + (frame.m_left * sizeof(GifColor));
+    auto to = dest + (dest_y * m_pitch) + (frame.m_left * sizeof(GifColor));
     for (unsigned int src_x = 0; src_x < frame.m_width; ++src_x)
     {
       to += 3;
@@ -473,7 +468,6 @@ void GifHelper::ClearFrameAreaToTransparency(unsigned char* dest, const GifFrame
 }
 
 GifFrame::GifFrame() :
-  m_pImage(nullptr),
   m_delay(0),
   m_imageSize(0),
   m_height(0),
@@ -485,7 +479,6 @@ GifFrame::GifFrame() :
 
 
 GifFrame::GifFrame(const GifFrame& src) :
-  m_pImage(nullptr),
   m_delay(src.m_delay),
   m_imageSize(src.m_imageSize),
   m_height(src.m_height),
@@ -494,13 +487,12 @@ GifFrame::GifFrame(const GifFrame& src) :
   m_left(src.m_left),
   m_disposal(src.m_disposal)
 {
-  if (src.m_pImage)
+  if (!src.m_pImage.empty())
   {
-    m_pImage = new unsigned char[m_imageSize];
-    memcpy(m_pImage, src.m_pImage, m_imageSize);
+    m_pImage = src.m_pImage;
   }
 
-  if (src.m_palette.size())
+  if (!src.m_palette.empty())
   {
     m_palette = src.m_palette;
   }
@@ -508,6 +500,5 @@ GifFrame::GifFrame(const GifFrame& src) :
 
 GifFrame::~GifFrame()
 {
-  delete[] m_pImage;
-  m_pImage = nullptr;
+
 }

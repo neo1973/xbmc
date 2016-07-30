@@ -31,6 +31,7 @@ typedef LPSTR PSZ;
 #endif
 #include <vector>
 #include <string>
+#include <iostream>
 
 class CmdLineArgs : public std::vector<char*>
 {
@@ -55,12 +56,13 @@ public:
     CmdLineArgs (const int argc, const char **argv)
     {
       std::string cmdline;
+      std::cout << cmdline.c_str() << std::endl;
 #ifdef TARGET_POSIX
       cmdline = "\"";
 #endif
       for (int i = 0 ; i<argc ; i++)
       {
-        cmdline += std::string(argv[i]);
+        cmdline += argv[i];
         if ( i != (argc-1) )
         {
 #ifdef TARGET_POSIX
@@ -75,8 +77,10 @@ public:
 #endif
       m_cmdline = new char [cmdline.length() + 1];
       if (m_cmdline)
-      {
+      { 
+          //memset( m_cmdline, 0, cmdline.length() + 1);
           strcpy(m_cmdline, cmdline.c_str());
+          std::cout << cmdline.c_str() << std::endl;
           ParseCmdLine();
       }
     }
@@ -105,8 +109,10 @@ private:
         bool bInQuotes = false;
         PSZ pargs = m_cmdline;
 
+        std::cout << "Before Loop" << std::endl;
         while (*pargs)
         {
+            std::cout << "In Loop" << std::endl;
             while (isspace (*pargs))        // skip leading whitespace
                 pargs++;
 
@@ -146,6 +152,7 @@ private:
                 }
             }
         } // while (*pargs)
+        std::cout << "After Loop" << std::endl;
     } // ParseCmdLine()
 }; // class CmdLineArgs
 

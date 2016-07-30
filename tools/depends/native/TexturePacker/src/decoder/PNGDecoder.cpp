@@ -181,14 +181,16 @@ bool PNGDecoder::LoadFile(const std::string &filename, DecodedFrames &frames)
   png_read_update_info(png_ptr, info_ptr);
   
   // Row size in bytes.
-  int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+  auto rowbytes = png_get_rowbytes(png_ptr, info_ptr);
   
   // glTexImage2d requires rows to be 4-byte aligned
   //  rowbytes += 3 - ((rowbytes-1) % 4);
   
+  const size_t ImageSize = rowbytes * temp_height * sizeof(png_byte)+15;
+  
   // Allocate the image_data as a big block, to be given to opengl
   png_byte * image_data;
-  image_data = (png_byte*)new png_byte[rowbytes * temp_height * sizeof(png_byte)+15];
+  image_data = (png_byte*)new png_byte[ImageSize];
   if (image_data == NULL)
   {
     fprintf(stderr, "error: could not allocate memory for PNG image data\n");
@@ -218,25 +220,21 @@ bool PNGDecoder::LoadFile(const std::string &filename, DecodedFrames &frames)
   frames.user = NULL;
   DecodedFrame frame;
   
-  frame.rgbaImage.pixels = (char *)image_data;
+  frame.rgbaImage.pixels.assign(image_data, image_data + ImageSize);
   frame.rgbaImage.height = temp_height;
   frame.rgbaImage.width = temp_width;
   frame.rgbaImage.bbp = 32;
   frame.rgbaImage.pitch = 4 * temp_width;
-  frames.frameList.push_back(frame);
+  frames.frameList.push_back(std::move(frame));
   // clean up
   png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+  delete [] image_data;
   delete [] row_pointers;
   return true;
 }
 
 void PNGDecoder::FreeDecodedFrames(DecodedFrames &frames)
 {
-  for (unsigned int i = 0; i < frames.frameList.size(); i++)
-  {
-    delete [] frames.frameList[i].rgbaImage.pixels;
-  }
-  
   frames.clear();
 }
 

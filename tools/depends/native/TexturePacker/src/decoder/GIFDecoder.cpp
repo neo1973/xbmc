@@ -19,6 +19,7 @@
  */
 
 #include <cstring>
+#include <utility>
 #include "GIFDecoder.h"
 #include "GifHelper.h"
 
@@ -30,50 +31,38 @@ bool GIFDecoder::CanDecode(const std::string &filename)
 
 bool GIFDecoder::LoadFile(const std::string &filename, DecodedFrames &frames)
 {
-  int n = 0;
-  GifHelper *gifImage = new GifHelper();
+  std::unique_ptr<GifHelper> gifImage(new GifHelper());
   if (gifImage->LoadGif(filename.c_str()))
   {
-    auto extractedFrames = gifImage->GetFrames();
-    n = extractedFrames.size();
-    if (n > 0)
+    const auto& extractedFrames = gifImage->GetFrames();
+    if (extractedFrames.size() > 0)
     {
-      unsigned int height = gifImage->GetHeight();
-      unsigned int width = gifImage->GetWidth();
-      unsigned int pitch = gifImage->GetPitch();
-      unsigned int frameSize = pitch * height;
-      for (unsigned int i = 0; i < extractedFrames.size(); i++)
+      for (const auto& ef : extractedFrames)
       {
         DecodedFrame frame;
+        const auto frameSize = gifImage->GetPitch() * gifImage->GetHeight();
         
-        frame.rgbaImage.pixels = (char *)new char[frameSize];
-        memcpy(frame.rgbaImage.pixels, extractedFrames[i]->m_pImage, frameSize);
-        frame.rgbaImage.height = height;
-        frame.rgbaImage.width = width;
+        frame.rgbaImage.pixels = ef->m_pImage;
+        frame.rgbaImage.height = gifImage->GetHeight();
+        frame.rgbaImage.width = gifImage->GetWidth();
         frame.rgbaImage.bbp = 32;
-        frame.rgbaImage.pitch = pitch;
-        frame.delay = extractedFrames[i]->m_delay;
+        frame.rgbaImage.pitch = gifImage->GetPitch();
+        frame.delay = ef->m_delay;
         
-        frames.frameList.push_back(frame);
+        frames.frameList.push_back(std::move(frame));
       }
     }
-    frames.user = gifImage;
+    frames.user = std::move(gifImage);
     return true;
   }
   else
   {
-    delete gifImage;
     return false;
   }
 }
 
 void GIFDecoder::FreeDecodedFrames(DecodedFrames &frames)
 {
-  for (unsigned int i = 0; i < frames.frameList.size(); i++)
-  {
-    delete [] frames.frameList[i].rgbaImage.pixels;
-  }
-  delete (GifHelper *)frames.user;
   frames.clear();
 }
 

@@ -19,15 +19,16 @@
  */
 
 #pragma once
+#include <memory>
 #include <string>
 #include <vector>
 
 class RGBAImage
 {
 public:
-  RGBAImage() : pixels(NULL), width(0), height(0), bbp(0), pitch(0) {}
+  RGBAImage() : width(0), height(0), bbp(0), pitch(0) {}
   
-  char *pixels;//image data
+  std::vector<char> pixels;//image data
   int width;// width
   int height;// height
   int bbp;// bits per pixel
@@ -42,17 +43,22 @@ class DecodedFrame
    int				delay;					/* Frame delay in ms */
 };
 
+class IHelper
+{
+  public:
+    virtual ~IHelper(){}
+};
+
 class DecodedFrames
 {
   public:
-    DecodedFrames(): user(NULL) {}
+    DecodedFrames(){}
     std::vector<DecodedFrame> frameList;
-    void     *user;         /* used internally*/
+    std::unique_ptr<IHelper> user;         /* used internally*/
 
     void clear()
     {
       frameList.clear();
-      user = NULL;
     }
 };
 

@@ -44,6 +44,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "IDecoder.h"
 #include "SimpleFS.h"
 
 #pragma pack(1)
@@ -63,7 +64,7 @@ public:
   GifFrame();
   virtual ~GifFrame();
 
-  unsigned char*  m_pImage;
+  std::vector<char> m_pImage;
   unsigned int    m_delay;
 
 private:
@@ -82,7 +83,7 @@ private:
 
 
 
-class GifHelper
+class GifHelper : public IHelper
 {
   friend class GifFrame;
 
@@ -113,9 +114,9 @@ private:
   bool            m_hasBackground;
   GifColor*       m_backColor;
   std::vector<GifColor> m_globalPalette;
-  unsigned char*  m_pTemplate;
+  std::vector<char>  m_Template;
   int             m_isAnimated;
-  CFile*          m_gifFile;
+  std::unique_ptr<CFile> m_gifFile;
 
   unsigned int m_width;
   unsigned int m_height;
@@ -136,8 +137,8 @@ private:
   static void ConvertColorTable(std::vector<GifColor> &dest, ColorMapObject* src, unsigned int size);
   bool GcbToFrame(GifFrame &frame, unsigned int imgIdx);
   int ExtractFrames(unsigned int count);
-  void ClearFrameAreaToTransparency(unsigned char* dest, const GifFrame &frame);
-  void ConstructFrame(GifFrame &frame, const unsigned char* src) const;
+  void ClearFrameAreaToTransparency(char* dest, const GifFrame &frame);
+  void ConstructFrame(GifFrame &frame, const char* src) const;
   bool PrepareTemplate(GifFrame &frame);
   void Release();
 
