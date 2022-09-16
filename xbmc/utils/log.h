@@ -11,6 +11,7 @@
 // spdlog specific defines
 // clang-format off
 #include <string_view>
+#include <fmt/core.h>
 #define SPDLOG_LEVEL_NAMES \
 { \
   std::string_view{"TRACE"}, \
@@ -99,7 +100,7 @@ public:
                          const std::string_view& format,
                          Args&&... args)
   {
-    GetInstance().FormatAndLogInternal(level, format, std::forward<Args>(args)...);
+    GetInstance().FormatAndLogInternal(level, format, fmt::make_format_args(args...));
   }
 
   template<typename... Args>
@@ -123,18 +124,9 @@ private:
 
   static spdlog::level::level_enum MapLogLevel(int level);
 
-  template<typename... Args>
-  inline void FormatAndLogInternal(spdlog::level::level_enum level,
-                                   const std::string_view& format,
-                                   Args&&... args)
-  {
-    auto message = fmt::format(format, std::forward<Args>(args)...);
-
-    // fixup newline alignment, number of spaces should equal prefix length
-    StringUtils::Replace(message, "\n", "\n                                                   ");
-
-    m_defaultLogger->log(level, message);
-  }
+  void FormatAndLogInternal(spdlog::level::level_enum level,
+                            const std::string_view& format,
+                            fmt::format_args args);
 
   Logger CreateLogger(const std::string& loggerName);
 

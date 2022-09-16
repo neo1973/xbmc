@@ -177,7 +177,7 @@ void CLog::SetLogLevel(int level)
 
   spdlog::set_level(spdLevel);
   FormatAndLogInternal(spdlog::level::info, "Log level changed to \"{}\"",
-                       spdlog::level::to_string_view(spdLevel));
+                       fmt::make_format_args(spdlog::level::to_string_view(spdLevel)));
 }
 
 bool CLog::IsLogLevelLogged(int loglevel)
@@ -271,6 +271,18 @@ spdlog::level::level_enum CLog::MapLogLevel(int level)
   }
 
   return spdlog::level::info;
+}
+
+void CLog::FormatAndLogInternal(spdlog::level::level_enum level,
+                                const std::string_view& format,
+                                fmt::format_args args)
+{
+  auto message = fmt::vformat(format, args);
+
+  // fixup newline alignment, number of spaces should equal prefix length
+  StringUtils::Replace(message, "\n", "\n                                                   ");
+
+  m_defaultLogger->log(level, message);
 }
 
 Logger CLog::CreateLogger(const std::string& loggerName)
