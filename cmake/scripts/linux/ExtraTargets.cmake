@@ -23,18 +23,20 @@ if("wayland" IN_LIST CORE_PLATFORM_NAME_LC)
                     "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-shell/xdg-shell-unstable-v6.xml"
                     "${WAYLAND_PROTOCOLS_DIR}/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml")
 
+  if("webos" IN_LIST CORE_PLATFORM_NAME_LC)
+    list(APPEND PROTOCOL_XMLS "${WAYLANDPROTOCOLSWEBOS_PROTOCOLSDIR}/webos-shell.xml"
+                              "${WAYLANDPROTOCOLSWEBOS_PROTOCOLSDIR}/webos-foreign.xml")
+  endif()
+
+  set(WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
   add_custom_command(OUTPUT "${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.hpp" "${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.cpp"
                      COMMAND "${WAYLANDPP_SCANNER}" ${PROTOCOL_XMLS} "${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.hpp" "${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.cpp"
                      DEPENDS "${WAYLANDPP_SCANNER}" ${PROTOCOL_XMLS}
                      COMMENT "Generating wayland-protocols C++ wrappers")
 
-  if("webos" IN_LIST CORE_PLATFORM_NAME_LC)
-    include(${CMAKE_SOURCE_DIR}/cmake/scripts/webos/ExtraTargets.cmake)
-  endif()
-
-  # Dummy target for dependencies
-  add_custom_target(generate-wayland-extra-protocols DEPENDS wayland-extra-protocols.hpp)
-  # ToDo: turn this into a TARGET OBJECT. For now, a custum target doesnt play nice with
-  # our PLATFORM_GLOBAL_TARGET_DEPS usage in macros
-  add_dependencies(lib${APP_NAME_LC} generate-wayland-extra-protocols)
+  add_library(wayland-extra-protocols STATIC "${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.cpp")
+  set_target_properties(wayland-extra-protocols PROPERTIES
+                                                INTERFACE_INCLUDE_DIRECTORIES "${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}"
+                                                INCLUDE_DIRECTORIES "${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}")
 endif()

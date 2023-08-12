@@ -1,8 +1,3 @@
-# from ArchSetup.cmake
-set_source_files_properties(${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.cpp
-                            ${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.hpp
-                            PROPERTIES GENERATED TRUE)
-
 set(SOURCES Connection.cpp
             OptionalsReg.cpp
             Output.cpp
@@ -20,7 +15,6 @@ set(SOURCES Connection.cpp
             ShellSurfaceXdgShellUnstableV6.cpp
             Util.cpp
             VideoSyncWpPresentation.cpp
-            ${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.cpp
             WindowDecorator.cpp
             WinEventsWayland.cpp
             WinSystemWayland.cpp
@@ -43,7 +37,6 @@ set(HEADERS Connection.h
             ShellSurfaceXdgShellUnstableV6.h
             Signals.h
             VideoSyncWpPresentation.h
-            ${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-extra-protocols.hpp
             WindowDecorator.h
             WinEventsWayland.h
             WinSystemWayland.h
@@ -63,18 +56,12 @@ if(OPENGLES_FOUND)
   list(APPEND HEADERS WinSystemWaylandEGLContextGLES.h)
 endif()
 if(TARGET_WEBOS)
-  set_source_files_properties(${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-webos-protocols.cpp
-                              ${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-webos-protocols.hpp
-                              PROPERTIES GENERATED TRUE)
-
   list(APPEND SOURCES OSScreenSaverWebOS.cpp
                       ShellSurfaceWebOSShell.cpp
-                      WinSystemWaylandWebOS.cpp
-                      ${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-webos-protocols.cpp)
+                      WinSystemWaylandWebOS.cpp)
   list(APPEND HEADERS OSScreenSaverWebOS.h
                       ShellSurfaceWebOSShell.h
-                      WinSystemWaylandWebOS.h
-                      ${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-webos-protocols.hpp)
+                      WinSystemWaylandWebOS.h)
 endif()
 
 core_add_library(windowing_WAYLAND)
