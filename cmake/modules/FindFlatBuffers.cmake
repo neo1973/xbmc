@@ -46,7 +46,7 @@ if(FLATBUFFERS_FOUND)
   set(FLATBUFFERS_INCLUDE_DIRS ${FLATBUFFERS_INCLUDE_DIR} ${FLATBUFFERS_MESSAGES_INCLUDE_DIR})
 
   if(NOT TARGET flatbuffers::flatbuffers)
-    add_library(flatbuffers::flatbuffers UNKNOWN IMPORTED)
+    add_library(flatbuffers::flatbuffers INTERFACE IMPORTED)
     set_target_properties(flatbuffers::flatbuffers PROPERTIES
                                FOLDER "External Projects"
                                INTERFACE_INCLUDE_DIRECTORIES ${FLATBUFFERS_INCLUDE_DIR})
