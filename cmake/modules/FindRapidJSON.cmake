@@ -34,8 +34,6 @@ if(ENABLE_INTERNAL_RapidJSON)
 
   set(RapidJSON_INCLUDE_DIR ${${MODULE}_INCLUDE_DIR})
 
-  # Add dependency to libkodi to build
-  set_property(GLOBAL APPEND PROPERTY INTERNAL_DEPS_PROP rapidjson)
 else()
   if(PKG_CONFIG_FOUND)
     pkg_check_modules(PC_RapidJSON RapidJSON>=1.0.2 QUIET)
@@ -62,6 +60,18 @@ find_package_handle_standard_args(RapidJSON
 
 if(RAPIDJSON_FOUND)
   set(RAPIDJSON_INCLUDE_DIRS ${RapidJSON_INCLUDE_DIR})
+
+  if(NOT TARGET RapidJSON::RapidJSON)
+    add_library(RapidJSON::RapidJSON INTERFACE IMPORTED)
+
+    set_target_properties(RapidJSON::RapidJSON PROPERTIES
+                                                 FOLDER "External Projects"
+                                                 INTERFACE_INCLUDE_DIRECTORIES "${RapidJSON_INCLUDE_DIR}")
+  endif()
+  if(TARGET rapidjson)
+    add_dependencies(RapidJSON::RapidJSON rapidjson)
+  endif()
+  set_property(GLOBAL APPEND PROPERTY INTERNAL_DEPS_PROP RapidJSON::RapidJSON)
 endif()
 
 mark_as_advanced(RapidJSON_INCLUDE_DIR)
