@@ -35,6 +35,18 @@ if(LIBANDROIDJNI_FOUND)
   set(LIBANDROIDJNI_LIBRARIES ${LIBANDROIDJNI_LIBRARY})
   set(LIBANDROIDJNI_INCLUDE_DIRS ${LIBANDROIDJNI_INCLUDE_DIR})
 
-  set_property(GLOBAL APPEND PROPERTY INTERNAL_DEPS_PROP libandroidjni)
+  if(NOT TARGET libandroidjni::libandroidjni)
+    add_library(libandroidjni::libandroidjni STATIC IMPORTED)
+    set_target_properties(libandroidjni::libandroidjni PROPERTIES
+                                                       FOLDER "External Projects"
+                                                       IMPORTED_LOCATION "${LIBANDROIDJNI_LIBRARY}"
+                                                       INTERFACE_INCLUDE_DIRECTORIES "${LIBANDROIDJNI_INCLUDE_DIR}")
+  endif()
+
+  if(TARGET libandroidjni)
+    add_dependencies(libandroidjni::libandroidjni libandroidjni)
+  endif()
+
+  set_property(GLOBAL APPEND PROPERTY INTERNAL_DEPS_PROP libandroidjni::libandroidjni)
 endif()
 mark_as_advanced(LIBANDROIDJNI_INCLUDE_DIR LIBANDROIDJNI_LIBRARY)
