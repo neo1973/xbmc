@@ -33,6 +33,7 @@ if(NOT LIBNFS_FOUND)
 
     BUILD_DEP_TARGET()
 
+    set(nfs_internal_build 1)
     set(NFS_LIBRARY ${${MODULE}_LIBRARY})
     set(NFS_INCLUDE_DIR ${${MODULE}_INCLUDE_DIR})
   else()
@@ -62,9 +63,7 @@ find_package_handle_standard_args(NFS
                                   VERSION_VAR LIBNFS_VERSION)
 
 if(NFS_FOUND)
-  set(NFS_LIBRARIES ${NFS_LIBRARY})
-  set(NFS_INCLUDE_DIRS ${NFS_INCLUDE_DIR})
-  set(NFS_DEFINITIONS -DHAS_FILESYSTEM_NFS=1)
+  set(_nfs_definitions HAS_FILESYSTEM_NFS)
 
   set(CMAKE_REQUIRED_INCLUDES "${NFS_INCLUDE_DIR}")
   set(CMAKE_REQUIRED_LIBRARIES ${NFS_LIBRARY})
@@ -79,8 +78,8 @@ if(NFS_FOUND)
      }
   " NFS_SET_TIMEOUT)
 
-  if(NFS_SET_TIMEOUT)
-    list(APPEND NFS_DEFINITIONS -DHAS_NFS_SET_TIMEOUT)
+  if(NFS_SET_TIMEOUT OR nfs_internal_build)
+    list(APPEND _nfs_definitions HAS_NFS_SET_TIMEOUT)
   endif()
 
   # Check for mount_getexports_timeout
@@ -93,8 +92,8 @@ if(NFS_FOUND)
      }
   " NFS_MOUNT_GETEXPORTS_TIMEOUT)
 
-  if(NFS_MOUNT_GETEXPORTS_TIMEOUT)
-    list(APPEND NFS_DEFINITIONS -DHAS_NFS_MOUNT_GETEXPORTS_TIMEOUT)
+  if(NFS_MOUNT_GETEXPORTS_TIMEOUT OR nfs_internal_build)
+    list(APPEND _nfs_definitions HAS_NFS_MOUNT_GETEXPORTS_TIMEOUT)
   endif()
 
   unset(CMAKE_REQUIRED_INCLUDES)
@@ -106,7 +105,7 @@ if(NFS_FOUND)
     set_target_properties(NFS::NFS PROPERTIES
                                    IMPORTED_LOCATION "${NFS_LIBRARY}"
                                    INTERFACE_INCLUDE_DIRECTORIES "${NFS_INCLUDE_DIR}"
-                                   INTERFACE_COMPILE_DEFINITIONS "${NFS_DEFINITIONS}")
+                                   INTERFACE_COMPILE_DEFINITIONS "${_nfs_definitions}")
     if(TARGET libnfs)
       add_dependencies(NFS::NFS libnfs)
     endif()
