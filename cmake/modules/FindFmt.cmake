@@ -121,12 +121,12 @@ if((NOT TARGET fmt::fmt OR Fmt_FIND_REQUIRED) AND NOT TARGET fmt)
       if(FMT_LIBRARY_RELEASE)
         set_target_properties(fmt::fmt PROPERTIES
                                        IMPORTED_CONFIGURATIONS RELEASE
-                                       IMPORTED_LOCATION "${FMT_LIBRARY_RELEASE}")
+                                       IMPORTED_LOCATION_RELEASE "${FMT_LIBRARY_RELEASE}")
       endif()
       if(FMT_LIBRARY_DEBUG)
         set_target_properties(fmt::fmt PROPERTIES
                                        IMPORTED_CONFIGURATIONS DEBUG
-                                       IMPORTED_LOCATION "${FMT_LIBRARY_DEBUG}")
+                                       IMPORTED_LOCATION_DEBUG "${FMT_LIBRARY_DEBUG}")
       endif()
       set_target_properties(fmt::fmt PROPERTIES
                                      INTERFACE_INCLUDE_DIRECTORIES "${FMT_INCLUDE_DIR}")
