@@ -219,7 +219,6 @@ else()
 
   if(PKG_CONFIG_FOUND)
     pkg_check_modules(PC_FFMPEG ${FFMPEG_PKGS} QUIET)
-    string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
   endif()
 
   find_path(FFMPEG_INCLUDE_DIRS libavcodec/avcodec.h libavfilter/avfilter.h libavformat/avformat.h
@@ -238,11 +237,15 @@ else()
   find_library(FFMPEG_LIBAVCODEC NAMES avcodec libavcodec PATH_SUFFIXES ffmpeg/libavcodec)
 
   if(NOT TARGET ffmpeg::libavcodec)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_FFMPEG libavcodec${_avcodec_ver} QUIET)
+      string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
+    endif()
     add_library(ffmpeg::libavcodec UNKNOWN IMPORTED)
     set_target_properties(ffmpeg::libavcodec PROPERTIES
                                          FOLDER "FFMPEG - External Projects"
                                          IMPORTED_LOCATION "${FFMPEG_LIBAVCODEC}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LIBAVCODEC}"
+                                         INTERFACE_LINK_LIBRARIES "${PC_FFMPEG_LDFLAGS}"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}")
   endif()
 
@@ -254,11 +257,15 @@ else()
   find_library(FFMPEG_LIBAVFILTER NAMES avfilter libavfilter PATH_SUFFIXES ffmpeg/libavfilter)
 
   if(NOT TARGET ffmpeg::libavfilter)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_FFMPEG libavfilter${_avfilter_ver} QUIET)
+      string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
+    endif()
     add_library(ffmpeg::libavfilter UNKNOWN IMPORTED)
     set_target_properties(ffmpeg::libavfilter PROPERTIES
                                          FOLDER "FFMPEG - External Projects"
                                          IMPORTED_LOCATION "${FFMPEG_LIBAVFILTER}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LIBAVFILTER}"
+                                         INTERFACE_LINK_LIBRARIES "${PC_FFMPEG_LDFLAGS}"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}")
   endif()
 
@@ -270,11 +277,15 @@ else()
   find_library(FFMPEG_LIBAVFORMAT NAMES avformat libavformat PATH_SUFFIXES ffmpeg/libavformat)
 
   if(NOT TARGET ffmpeg::libavformat)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_FFMPEG libavformat${_avformat_ver} QUIET)
+      string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
+    endif()
     add_library(ffmpeg::libavformat UNKNOWN IMPORTED)
     set_target_properties(ffmpeg::libavformat PROPERTIES
                                          FOLDER "FFMPEG - External Projects"
                                          IMPORTED_LOCATION "${FFMPEG_LIBAVFORMAT}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LIBAVFORMAT}"
+                                         INTERFACE_LINK_LIBRARIES "${PC_FFMPEG_LDFLAGS}"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}")
   endif()
 
@@ -286,11 +297,15 @@ else()
   find_library(FFMPEG_LIBAVUTIL NAMES avutil libavutil PATH_SUFFIXES ffmpeg/libavutil)
 
   if(NOT TARGET ffmpeg::libavutil)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_FFMPEG libavutil${_avutil_ver} QUIET)
+      string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
+    endif()
     add_library(ffmpeg::libavutil UNKNOWN IMPORTED)
     set_target_properties(ffmpeg::libavutil PROPERTIES
                                          FOLDER "FFMPEG - External Projects"
                                          IMPORTED_LOCATION "${FFMPEG_LIBAVUTIL}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LIBAVUTIL}"
+                                         INTERFACE_LINK_LIBRARIES "${PC_FFMPEG_LDFLAGS}"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}")
   endif()
 
@@ -302,11 +317,15 @@ else()
   find_library(FFMPEG_LIBSWSCALE NAMES swscale libswscale PATH_SUFFIXES ffmpeg/libswscale)
 
   if(NOT TARGET ffmpeg::libswscale)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_FFMPEG libswscale${_swscale_ver} QUIET)
+      string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
+    endif()
     add_library(ffmpeg::libswscale UNKNOWN IMPORTED)
     set_target_properties(ffmpeg::libswscale PROPERTIES
                                          FOLDER "FFMPEG - External Projects"
                                          IMPORTED_LOCATION "${FFMPEG_LIBSWSCALE}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LIBSWSCALE}"
+                                         INTERFACE_LINK_LIBRARIES "${PC_FFMPEG_LDFLAGS}"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}")
   endif()
 
@@ -318,11 +337,15 @@ else()
   find_library(FFMPEG_LIBSWRESAMPLE NAMES NAMES swresample libswresample PATH_SUFFIXES ffmpeg/libswresample)
 
   if(NOT TARGET ffmpeg::libswresample)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_FFMPEG libswresample${_swresample_ver} QUIET)
+      string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
+    endif()
     add_library(ffmpeg::libswresample UNKNOWN IMPORTED)
     set_target_properties(ffmpeg::libswresample PROPERTIES
                                          FOLDER "FFMPEG - External Projects"
                                          IMPORTED_LOCATION "${FFMPEG_LIBSWRESAMPLE}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LIBSWRESAMPLE}"
+                                         INTERFACE_LINK_LIBRARIES "${PC_FFMPEG_LDFLAGS}"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}")
   endif()
 
@@ -334,11 +357,15 @@ else()
   find_library(FFMPEG_LIBPOSTPROC NAMES postproc libpostproc PATH_SUFFIXES ffmpeg/libpostproc)
 
   if(NOT TARGET ffmpeg::libpostproc)
+    if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_FFMPEG libpostproc${_postproc_ver} QUIET)
+      string(REGEX REPLACE "framework;" "framework " PC_FFMPEG_LDFLAGS "${PC_FFMPEG_LDFLAGS}")
+    endif()
     add_library(ffmpeg::libpostproc UNKNOWN IMPORTED)
     set_target_properties(ffmpeg::libpostproc PROPERTIES
                                          FOLDER "FFMPEG - External Projects"
                                          IMPORTED_LOCATION "${FFMPEG_LIBPOSTPROC}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LIBPOSTPROC}"
+                                         INTERFACE_LINK_LIBRARIES "${PC_FFMPEG_LDFLAGS}"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}")
   endif()
 
@@ -368,9 +395,6 @@ else()
                                                     FFMPEG_VERSION
                                       FAIL_MESSAGE "FFmpeg ${REQUIRED_FFMPEG_VERSION} not found, please consider using -DENABLE_INTERNAL_FFMPEG=ON")
 
-    if(FFMPEG_FOUND)
-      set(FFMPEG_LDFLAGS ${PC_FFMPEG_LDFLAGS} CACHE STRING "ffmpeg linker flags")
-    endif()
   else()
     if(FFMPEG_PATH)
       message(FATAL_ERROR "FFmpeg not found, please consider using -DENABLE_INTERNAL_FFMPEG=ON")
@@ -390,8 +414,29 @@ if(FFMPEG_FOUND)
     set_target_properties(ffmpeg::ffmpeg PROPERTIES
                                          FOLDER "External Projects"
                                          INTERFACE_INCLUDE_DIRECTORIES "${FFMPEG_INCLUDE_DIRS}"
-                                         INTERFACE_LINK_LIBRARIES "${FFMPEG_LDFLAGS}"
                                          INTERFACE_COMPILE_DEFINITIONS "${_ffmpeg_definition}")
+
+    if(TARGET ffmpeg::libavcodec)
+      target_link_libraries(ffmpeg::ffmpeg INTERFACE ffmpeg::libavcodec)
+    endif()
+    if(TARGET ffmpeg::libavfilter)
+      target_link_libraries(ffmpeg::ffmpeg INTERFACE ffmpeg::libavfilter)
+    endif()
+    if(TARGET ffmpeg::libavformat)
+      target_link_libraries(ffmpeg::ffmpeg INTERFACE ffmpeg::libavformat)
+    endif()
+    if(TARGET ffmpeg::libavutil)
+      target_link_libraries(ffmpeg::ffmpeg INTERFACE ffmpeg::libavutil)
+    endif()
+    if(TARGET ffmpeg::libswscale)
+      target_link_libraries(ffmpeg::ffmpeg INTERFACE ffmpeg::libswscale)
+    endif()
+    if(TARGET ffmpeg::libswresample)
+      target_link_libraries(ffmpeg::ffmpeg INTERFACE ffmpeg::libswresample)
+    endif()
+    if(TARGET ffmpeg::libpostproc)
+      target_link_libraries(ffmpeg::ffmpeg INTERFACE ffmpeg::libpostproc)
+    endif()
   endif()
 
   if(TARGET ffmpeg)
