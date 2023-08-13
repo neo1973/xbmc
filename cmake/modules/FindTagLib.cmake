@@ -80,12 +80,12 @@ if(TAGLIB_FOUND)
     if(TAGLIB_LIBRARY_RELEASE)
       set_target_properties(TagLib::TagLib PROPERTIES
                                            IMPORTED_CONFIGURATIONS RELEASE
-                                           IMPORTED_LOCATION "${TAGLIB_LIBRARY_RELEASE}")
+                                           IMPORTED_LOCATION_RELEASE "${TAGLIB_LIBRARY_RELEASE}")
     endif()
     if(TAGLIB_LIBRARY_DEBUG)
       set_target_properties(TagLib::TagLib PROPERTIES
                                            IMPORTED_CONFIGURATIONS DEBUG
-                                           IMPORTED_LOCATION "${TAGLIB_LIBRARY_DEBUG}")
+                                           IMPORTED_LOCATION_DEBUG "${TAGLIB_LIBRARY_DEBUG}")
     endif()
     set_target_properties(TagLib::TagLib PROPERTIES
                                          INTERFACE_INCLUDE_DIRECTORIES "${TAGLIB_INCLUDE_DIR}")
