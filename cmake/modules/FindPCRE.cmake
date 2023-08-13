@@ -126,12 +126,12 @@ if(NOT PCRE::PCRE)
       if(PCRE_LIBRARY_RELEASE)
         set_target_properties(PCRE::PCRE PROPERTIES
                                          IMPORTED_CONFIGURATIONS RELEASE
-                                         IMPORTED_LOCATION "${PCRE_LIBRARY_RELEASE}")
+                                         IMPORTED_LOCATION_RELEASE "${PCRE_LIBRARY_RELEASE}")
       endif()
       if(PCRE_LIBRARY_DEBUG)
         set_target_properties(PCRE::PCRE PROPERTIES
                                          IMPORTED_CONFIGURATIONS DEBUG
-                                         IMPORTED_LOCATION "${PCRE_LIBRARY_DEBUG}")
+                                         IMPORTED_LOCATION_DEBUG "${PCRE_LIBRARY_DEBUG}")
       endif()
       set_target_properties(PCRE::PCRE PROPERTIES
                                        INTERFACE_INCLUDE_DIRECTORIES "${PCRE_INCLUDE_DIR}")
@@ -146,12 +146,12 @@ if(NOT PCRE::PCRE)
       if(PCRE_LIBRARY_RELEASE)
         set_target_properties(PCRE::PCRECPP PROPERTIES
                                             IMPORTED_CONFIGURATIONS RELEASE
-                                            IMPORTED_LOCATION "${PCRECPP_LIBRARY_RELEASE}")
+                                            IMPORTED_LOCATION_RELEASE "${PCRECPP_LIBRARY_RELEASE}")
       endif()
       if(PCRE_LIBRARY_DEBUG)
         set_target_properties(PCRE::PCRECPP PROPERTIES
                                             IMPORTED_CONFIGURATIONS DEBUG
-                                            IMPORTED_LOCATION "${PCRECPP_LIBRARY_DEBUG}")
+                                            IMPORTED_LOCATION_DEBUG "${PCRECPP_LIBRARY_DEBUG}")
       endif()
       set_target_properties(PCRE::PCRECPP PROPERTIES
                                           INTERFACE_LINK_LIBRARIES PCRE::PCRE)
