@@ -58,7 +58,7 @@ void CSkinTimerManager::LoadTimerInternal(const TiXmlElement* node)
   }
 
   std::string timerName = node->FirstChild("name")->FirstChild()->Value();
-  if (m_timers.count(timerName) > 0)
+  if (TimerExists(timerName))
   {
     CLog::LogF(LOGWARNING,
                "Ignoring timer with name {} - another timer with the same name already exists",
