@@ -38,6 +38,70 @@ using XFILE::CFile;
 
 namespace ADDON
 {
+namespace
+{
+
+class FilenameXMLCache
+{
+public:
+  const CXBMCTinyXML* loadXMLFile(const std::string& id, const std::string& xmlFilename)
+  {
+    struct __stat64 s;
+    if (XFILE::CFile::Stat(xmlFilename, &s) == 0)
+    {
+      auto found = m_cache.find(xmlFilename);
+      if (found != m_cache.end() && s.st_mtime <= found->second.modified)
+      {
+        auto& cachedItem = found->second;
+        return &cachedItem.xml;
+      }
+      else
+      {
+        auto& cachedItem = m_cache[xmlFilename];
+        cachedItem.id = id;
+        cachedItem.modified = s.st_mtime;
+
+        if (!cachedItem.xml.LoadFile(xmlFilename))
+        {
+          if (CFile::Exists(xmlFilename))
+          {
+            CLog::Log(LOGERROR, "CAddon[{}]: unable to load: {}, Line {}\n{}", id, xmlFilename,
+                      cachedItem.xml.ErrorRow(), cachedItem.xml.ErrorDesc());
+          }
+          m_cache.erase(xmlFilename);
+          return nullptr;
+        }
+
+        return &cachedItem.xml;
+      }
+    }
+    return nullptr;
+  }
+
+  void RemoveAddon(const std::string& id)
+  {
+    for (auto iter = m_cache.cbegin(); iter != m_cache.cend();)
+    {
+      if (iter->second.id == id)
+        iter = m_cache.erase(iter);
+      else
+        ++iter;
+    }
+  }
+
+private:
+  struct CacheItem
+  {
+    std::string id;
+    time_t modified;
+    CXBMCTinyXML xml;
+  };
+
+  std::unordered_map<std::string, CacheItem> m_cache;
+};
+
+FilenameXMLCache cache;
+} // namespace
 
 CAddon::CAddon(const AddonInfoPtr& addonInfo, AddonType addonType)
   : m_addonInfo(addonInfo),
@@ -264,57 +328,9 @@ bool CAddon::SettingsLoaded(AddonInstanceId id /* = ADDON_SETTINGS_ID */) const
   return addonSettings && addonSettings->IsLoaded();
 }
 
-class FilenameXMLCache 
-{
-public:
-	const CXBMCTinyXML* loadXMLFile(const std::string& id, const std::string& xmlFilename)
-	{
-	  struct __stat64 s;
-	  if (XFILE::CFile::Stat(xmlFilename, &s) == 0)
-	  {
-		auto found = cache.find(xmlFilename);
-		if (found != cache.end() && s.st_mtime <= found->second.modified)
-		{
-		  auto& cachedItem = found->second;
-		  return &cachedItem.xml;
-		}
-		else
-		{
-		  auto& cachedItem = cache[xmlFilename];
-		  cachedItem.modified = s.st_mtime;
-
-		  if (!cachedItem.xml.LoadFile(xmlFilename))
-		  {
-			if (CFile::Exists(xmlFilename))
-			{
-			  CLog::Log(LOGERROR, "CAddon[{}]: unable to load: {}, Line {}\n{}", id, xmlFilename,
-						cachedItem.xml.ErrorRow(), cachedItem.xml.ErrorDesc());
-			}
-			cache.erase(xmlFilename);
-			return nullptr;
-		  }
-
-		  return &cachedItem.xml;
-		}
-	  }
-	  return nullptr;
-	}
-
-private:
-
-	struct CacheItem
-	{
-	  time_t modified;
-	  CXBMCTinyXML xml;
-	};
-
-	std::unordered_map<std::string, CacheItem> cache;
-};
-
 const CXBMCTinyXML* loadXMLFile(const std::string& id, const std::string& xmlFilename)
 {
-	static FilenameXMLCache cache;
-	return cache.loadXMLFile(id, xmlFilename);
+  return cache.loadXMLFile(id, xmlFilename);
 }
 
 bool CAddon::LoadSettings(bool bForce,
@@ -716,6 +732,7 @@ void OnPreUnInstall(const AddonPtr& addon)
 void OnPostUnInstall(const AddonPtr& addon)
 {
   addon->OnPostUnInstall();
+  cache.RemoveAddon(addon->ID());
 }
 
 } // namespace ADDON
