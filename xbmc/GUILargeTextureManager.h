@@ -68,7 +68,7 @@ public:
 
    \sa CImageLoader
    */
-  void OnLoadComplete(CImageLoader* image);
+  void OnLoadComplete(std::unique_ptr<CImageLoader> image);
 
   /*!
    \brief Request a texture to be loaded in the background.

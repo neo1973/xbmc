@@ -13,12 +13,14 @@
 #include "settings/SettingsComponent.h"
 #include "windowing/WinSystem.h"
 
+#include <algorithm>
+
 using namespace std::chrono_literals;
 using namespace KODI::GUILIB;
 
-CGUITextureLoaderThread::CGUITextureLoaderThread(CGUITextureJobManager* manager,
+CGUITextureLoaderThread::CGUITextureLoaderThread(CGUITextureJobManager& manager,
                                                  unsigned int threadID)
-  : CThread("TextureLoader"), m_threadID(threadID), m_manager(manager)
+  : CThread("TextureLoader"), m_threadID(threadID), m_manager(&manager)
 {
   Create();
   SetPriority(ThreadPriority::LOWEST);
@@ -34,11 +36,11 @@ void CGUITextureLoaderThread::Process()
 {
   while (!m_bStop)
   {
-    CImageLoader* image = m_manager->GetNextImage();
+    std::unique_ptr<CImageLoader> image = m_manager->TakeNextImage();
     if (image)
     {
       image->DoWork(m_hasContext);
-      image->m_callback->OnLoadComplete(image);
+      image->m_callback->OnLoadComplete(std::move(image));
     }
     else
     {
@@ -64,13 +66,13 @@ CGUITextureJobManager::~CGUITextureJobManager()
   m_textureThread.clear();
 }
 
-unsigned int CGUITextureJobManager::AddImageToQueue(CImageLoader* image)
+unsigned int CGUITextureJobManager::AddImageToQueue(std::unique_ptr<CImageLoader> image)
 {
   std::unique_lock<CCriticalSection> lock(m_section);
 
   image->m_imageID = m_imageIDCounter;
 
-  m_imageQueue.emplace_back(image);
+  m_imageQueue.emplace_back(std::move(image));
 
   return m_imageIDCounter++;
 }
@@ -79,28 +81,21 @@ void CGUITextureJobManager::CancelImageLoad(unsigned int imageID)
 {
   std::unique_lock<CCriticalSection> lock(m_section);
 
-  for (size_t i = 0; i < m_imageQueue.size(); i++)
-  {
-    if (m_imageQueue[i] && m_imageQueue[i]->m_imageID == imageID)
-    {
-      delete m_imageQueue[i];
-      m_imageQueue[i] = nullptr;
-      return;
-    }
-  }
+  m_imageQueue.erase(std::remove_if(m_imageQueue.begin(), m_imageQueue.end(),
+                                    [imageID](const std::unique_ptr<CImageLoader>& loader)
+                                    { return loader->m_imageID == imageID; }),
+                     m_imageQueue.end());
 }
 
-CImageLoader* CGUITextureJobManager::GetNextImage()
+std::unique_ptr<CImageLoader> CGUITextureJobManager::TakeNextImage()
 {
   std::unique_lock<CCriticalSection> lock(m_section);
 
-  while (!m_imageQueue.empty())
+  if (!m_imageQueue.empty())
   {
-    CImageLoader* image = m_imageQueue.front();
+    std::unique_ptr<CImageLoader> image = std::move(m_imageQueue.front());
     m_imageQueue.pop_front();
-
-    if (image)
-      return image;
+    return image;
   }
 
   return nullptr;

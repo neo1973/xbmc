@@ -21,7 +21,7 @@ class CGUITextureJobManager;
 class CGUITextureLoaderThread : CThread
 {
 public:
-  CGUITextureLoaderThread(CGUITextureJobManager* manager, unsigned int threadID);
+  CGUITextureLoaderThread(CGUITextureJobManager& manager, unsigned int threadID);
 
 protected:
   void OnStartup() override;
@@ -45,7 +45,7 @@ public:
    \param image CImageLoader object which should be processed
    \return the ID of the added image
    */
-  unsigned int AddImageToQueue(CImageLoader* image);
+  unsigned int AddImageToQueue(std::unique_ptr<CImageLoader> loader);
   /*!
    \brief Cancels a queued image. Images in flight can't be canceled.
 
@@ -57,13 +57,13 @@ public:
 
    \return CImageLoader object 
    */
-  CImageLoader* GetNextImage();
+  std::unique_ptr<CImageLoader> TakeNextImage();
 
 private:
   mutable CCriticalSection m_section;
   unsigned int m_imageIDCounter{0};
   std::vector<std::unique_ptr<CGUITextureLoaderThread>> m_textureThread;
-  std::deque<CImageLoader*> m_imageQueue{};
+  std::deque<std::unique_ptr<CImageLoader>> m_imageQueue;
 };
 
 } // namespace KODI::GUILIB
