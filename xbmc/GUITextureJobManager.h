@@ -9,6 +9,7 @@
 #pragma once
 
 #include "GUILargeTextureManager.h"
+#include "threads/Condition.h"
 #include "threads/CriticalSection.h"
 #include "threads/Thread.h"
 
@@ -61,6 +62,8 @@ public:
 
 private:
   mutable CCriticalSection m_section;
+  XbmcThreads::ConditionVariable m_condVar;
+  bool m_inDestruction{false};
   unsigned int m_imageIDCounter{0};
   std::vector<std::unique_ptr<CGUITextureLoaderThread>> m_textureThread;
   std::deque<std::unique_ptr<CImageLoader>> m_imageQueue;

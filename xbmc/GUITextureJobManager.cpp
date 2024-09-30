@@ -34,19 +34,10 @@ void CGUITextureLoaderThread::OnStartup()
 
 void CGUITextureLoaderThread::Process()
 {
-  while (!m_bStop)
+  while (std::unique_ptr<CImageLoader> image = m_manager->TakeNextImage())
   {
-    std::unique_ptr<CImageLoader> image = m_manager->TakeNextImage();
-    if (image)
-    {
-      image->DoWork(m_hasContext);
-      image->m_callback->OnLoadComplete(std::move(image));
-    }
-    else
-    {
-      // sleep for a frame, assuming 60fps
-      CThread::Sleep(16ms);
-    }
+    image->DoWork(m_hasContext);
+    image->m_callback->OnLoadComplete(std::move(image));
   }
 }
 
@@ -57,12 +48,16 @@ CGUITextureJobManager::CGUITextureJobManager()
   uint32_t maxThreads =
       CServiceBroker::GetSettingsComponent()->GetAdvancedSettings()->m_guiTextureThreads;
   for (uint32_t i = 0; i < maxThreads; ++i)
-    m_textureThread.emplace_back(std::make_unique<CGUITextureLoaderThread>(this, i));
+    m_textureThread.emplace_back(std::make_unique<CGUITextureLoaderThread>(*this, i));
 }
 
 CGUITextureJobManager::~CGUITextureJobManager()
 {
-  std::unique_lock<CCriticalSection> lock(m_section);
+  {
+    std::unique_lock<CCriticalSection> lock(m_section);
+    m_inDestruction = true;
+  }
+  m_condVar.notifyAll();
   m_textureThread.clear();
 }
 
@@ -73,6 +68,8 @@ unsigned int CGUITextureJobManager::AddImageToQueue(std::unique_ptr<CImageLoader
   image->m_imageID = m_imageIDCounter;
 
   m_imageQueue.emplace_back(std::move(image));
+
+  m_condVar.notify();
 
   return m_imageIDCounter++;
 }
@@ -91,7 +88,12 @@ std::unique_ptr<CImageLoader> CGUITextureJobManager::TakeNextImage()
 {
   std::unique_lock<CCriticalSection> lock(m_section);
 
-  if (!m_imageQueue.empty())
+  if (m_imageQueue.empty() && !m_inDestruction)
+  {
+    m_condVar.wait(lock, [this]() { return !m_imageQueue.empty() || m_inDestruction; });
+  }
+
+  if (!m_inDestruction)
   {
     std::unique_ptr<CImageLoader> image = std::move(m_imageQueue.front());
     m_imageQueue.pop_front();
