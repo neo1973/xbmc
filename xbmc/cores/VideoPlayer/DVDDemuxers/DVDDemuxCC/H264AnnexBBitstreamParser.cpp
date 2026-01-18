@@ -45,11 +45,7 @@ CCPictureType CH264AnnexBBitstreamParser::ParsePacket(DemuxPacket* pPacket,
           {
             CLog::LogF(LOGDEBUG, "Corrupted slice header detected, marking packet as invalid");
             // Flush any CC data from tempBuffer to reorderBuffer before returning
-            while (!tempBuffer.empty())
-            {
-              reorderBuffer.push_back(std::move(tempBuffer.back()));
-              tempBuffer.pop_back();
-            }
+            std::ranges::move(std::views::reverse(tempBuffer), std::back_inserter(reorderBuffer));
             return CCPictureType::INVALID;
           }
 
@@ -61,13 +57,7 @@ CCPictureType CH264AnnexBBitstreamParser::ParsePacket(DemuxPacket* pPacket,
 
           // If this is a B-frame, move CC data from temp to reorder buffer
           if (picType == CCPictureType::OTHER)
-          {
-            while (!tempBuffer.empty())
-            {
-              reorderBuffer.push_back(std::move(tempBuffer.back()));
-              tempBuffer.pop_back();
-            }
-          }
+            std::ranges::move(std::views::reverse(tempBuffer), std::back_inserter(reorderBuffer));
         }
       }
       // SEI NAL unit (type 6) - extract closed caption data
